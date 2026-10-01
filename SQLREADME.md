@@ -22,6 +22,3 @@ This project performs an end-to-end SQL analysis on bank customer churn dataset 
 4. **Top At-Risk Churned Accounts:** Ranks top 3 highest-balance churned customers per country.
 5. **Behavioral Indicators:** Evaluates impact of account activity status (`is_active_member`), credit tier, and tenure (years with bank).
 
----
-
-## Repository Structure
