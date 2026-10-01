@@ -1,7 +1,7 @@
 -- Drop table if it exists
 DROP TABLE IF EXISTS customer_churn;
 
--- Create table schema matching Customer-Churn-Records.csv
+-- Create table 
 CREATE TABLE customer_churn (
     row_number INT,
     customer_id BIGINT PRIMARY KEY,
