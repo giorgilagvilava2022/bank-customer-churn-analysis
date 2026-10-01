@@ -1,5 +1,6 @@
--- 1. Full data inspection
-SELECT * FROM customer_churn;
+-- 1. Fist 10 data inspection
+SELECT * FROM customer_churn
+    LIMIT 10;
 
 -- 2. Geographic churn rate & financial balance lost
 SELECT 
