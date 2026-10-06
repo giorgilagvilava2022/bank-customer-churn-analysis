@@ -1,4 +1,4 @@
-   ![Bank Customer Churn Dashboard](dashboard/dashboard_preview.png)
+  ![Bank Customer Churn Dashboard](dashboard/DASHBOARD_PREVIEW.png)
 
 # 🏦 Bank Customer Churn Analysis (PostgreSQL)
 
