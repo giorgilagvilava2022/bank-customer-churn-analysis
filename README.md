@@ -5,9 +5,6 @@
 ## 📌 Project Overview
 This project performs an end-to-end SQL analysis of a bank customer churn dataset (10,000 customers) using **PostgreSQL**. The goal is to investigate the demographic, geographic, financial, and behavioral drivers behind customer exits (`exited = 1`) and to estimate the financial impact in terms of lost balances.
 
-  ![Bank Customer Churn Dashboard](dashboard/DASHBOARD_PREVIEW.png)
-
-
 ---
 
 ## 🛠️ Tech Stack & SQL Concepts
@@ -31,6 +28,8 @@ This project performs an end-to-end SQL analysis of a bank customer churn datase
 
 ## 📊 Results Summary
 Out of 10,000 customers, **2,038 left the bank (20.4% churn rate)**. The main findings:
+
+ ![Bank Customer Churn Dashboard](dashboard/DASHBOARD_PREVIEW.png)
 
 | Factor | Finding |
 |---|---|
