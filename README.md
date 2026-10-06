@@ -12,7 +12,7 @@ This project performs an end-to-end SQL analysis of a bank customer churn datase
 - **SQL concepts used:**
   - **Aggregations & financial metrics:** `COUNT()`, `SUM()`, `AVG()`, `ROUND()`
   - **Conditional logic:** `CASE WHEN` for age categorization and credit score grouping
-  - **Window functions:** `DENSE_RANK() OVER (PARTITION BY ... ORDER BY ...)` to find the top lost accounts per country
+  - **Window functions:** `ROW_NUMBER() OVER (PARTITION BY ... ORDER BY ...)` to find the top lost accounts per country
   - **Multi-variable grouping:** churn rate across product count and customer complaints
 
 ---
