@@ -1,3 +1,5 @@
+   ![Bank Customer Churn Dashboard](dashboard/dashboard_preview.png)
+
 # 🏦 Bank Customer Churn Analysis (PostgreSQL)
 
 ## 📌 Project Overview
