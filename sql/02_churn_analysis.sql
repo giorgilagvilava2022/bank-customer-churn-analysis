@@ -1,98 +1,201 @@
--- 1. Fist 10 data inspection
-SELECT * FROM customer_churn
-    LIMIT 10;
 
--- 2. Geographic churn rate & financial balance lost
-SELECT 
-    geography,
-    COUNT(customer_id) AS total_customers,
-    SUM(exited) AS churned_customers,
-    ROUND(AVG(exited) * 100, 2) AS churn_rate_pct,
-    ROUND(SUM(CASE WHEN exited = 1 THEN balance ELSE 0 END), 2) AS balance_lost
+-- 1. Data inspection (first 10 rows)
+SELECT *
 FROM customer_churn
-GROUP BY geography
-ORDER BY churn_rate_pct DESC;
+LIMIT 10;
 
--- 3. Age Group segmentation & Churn rate
-SELECT 
-    CASE 
-        WHEN age BETWEEN 18 AND 30 THEN '18-30 (Young)'
-        WHEN age BETWEEN 31 AND 45 THEN '31-45 (Adults)'
-        WHEN age BETWEEN 46 AND 60 THEN '46-60 (Middle Age)'
-        ELSE '60+ (Seniors)'
-    END AS age_group,
-    COUNT(customer_id) AS total_customers,
-    SUM(exited) AS churned_customers,
-    ROUND(AVG(exited) * 100, 2) AS churn_rate_pct
-FROM customer_churn
-GROUP BY age_group
-ORDER BY churn_rate_pct DESC;
 
--- 4. Overall Churn KPI Summary
-SELECT 
-    COUNT(customer_id) AS total_customers,
-    SUM(exited) AS churned_customers,
-    ROUND(AVG(exited) * 100, 2) AS churn_rate_pct,
-    ROUND(SUM(CASE WHEN exited = 1 THEN balance ELSE 0 END), 2) AS total_balance_lost
+-- 2. Overall churn KPI summary 
+SELECT
+    COUNT(customer_id)                                              AS total_customers,
+    SUM(exited)                                                     AS churned_customers,
+    ROUND(AVG(exited) * 100, 2)                                     AS churn_rate_pct,
+    ROUND(SUM(CASE WHEN exited = 1 THEN balance ELSE 0 END), 2)     AS total_balance_lost
 FROM customer_churn;
 
--- 5. Impact of Number of Products & Complaints on Churn
-SELECT 
+
+-- 3. Geographic churn rate, lost balance, and gap vs. overall average
+WITH overall AS (
+    SELECT AVG(exited) AS overall_churn
+    FROM customer_churn
+)
+SELECT
+    c.geography,
+    COUNT(c.customer_id)                                            AS total_customers,
+    SUM(c.exited)                                                   AS churned_customers,
+    ROUND(AVG(c.exited) * 100, 2)                                   AS churn_rate_pct,
+    ROUND((AVG(c.exited) - o.overall_churn) * 100, 2)               AS diff_vs_overall_pp,
+    ROUND(100.0 * SUM(c.exited) / SUM(SUM(c.exited)) OVER (), 2)    AS share_of_all_churn_pct,
+    ROUND(SUM(CASE WHEN c.exited = 1 THEN c.balance ELSE 0 END), 2) AS balance_lost
+FROM customer_churn c
+CROSS JOIN overall o
+GROUP BY c.geography, o.overall_churn
+ORDER BY churn_rate_pct DESC;
+
+
+-- 4. Age group segmentation & churn rate
+SELECT
+    CASE
+        WHEN age < 18  THEN 'Under 18'
+        WHEN age <= 30 THEN '18-30 (Young)'
+        WHEN age <= 45 THEN '31-45 (Adults)'
+        WHEN age <= 60 THEN '46-60 (Middle Age)'
+        ELSE '61+ (Seniors)'
+    END                                                             AS age_group,
+    COUNT(customer_id)                                              AS total_customers,
+    SUM(exited)                                                     AS churned_customers,
+    ROUND(AVG(exited) * 100, 2)                                     AS churn_rate_pct
+FROM customer_churn
+GROUP BY age_group
+ORDER BY MIN(age);
+
+
+-- 5. Gender vs churn (was missing from the original analysis)
+SELECT
+    gender,
+    COUNT(customer_id)                                              AS total_customers,
+    SUM(exited)                                                     AS churned_customers,
+    ROUND(AVG(exited) * 100, 2)                                     AS churn_rate_pct
+FROM customer_churn
+GROUP BY gender
+ORDER BY churn_rate_pct DESC;
+
+
+-- 6. Number of products vs churn
+SELECT
+    num_of_products,
+    COUNT(customer_id)                                              AS total_customers,
+    SUM(exited)                                                     AS churned_customers,
+    ROUND(AVG(exited) * 100, 2)                                     AS churn_rate_pct
+FROM customer_churn
+GROUP BY num_of_products
+ORDER BY num_of_products;
+
+
+-- 7. Complaints vs churn
+SELECT
+    complain,
+    COUNT(customer_id)                                              AS total_customers,
+    SUM(exited)                                                     AS churned_customers,
+    ROUND(AVG(exited) * 100, 2)                                     AS churn_rate_pct
+FROM customer_churn
+GROUP BY complain
+ORDER BY complain;
+
+
+-- 8. Products x complaints 
+SELECT
     num_of_products,
     complain,
-    COUNT(customer_id) AS total_customers,
-    SUM(exited) AS churned,
-    ROUND(AVG(exited) * 100, 2) AS churn_rate_pct
+    COUNT(customer_id)                                              AS total_customers,
+    SUM(exited)                                                     AS churned_customers,
+    ROUND(AVG(exited) * 100, 2)                                     AS churn_rate_pct
 FROM customer_churn
 GROUP BY num_of_products, complain
 ORDER BY num_of_products, complain;
 
--- 6. Top 3 Highest Balance Churned Customers per Country
-WITH RankedChurn AS (
-    SELECT 
+
+-- 9. Top 3 highest-balance churned customers per country
+WITH ranked_churn AS (
+    SELECT
         customer_id,
         surname,
         geography,
         balance,
         card_type,
-        DENSE_RANK() OVER (PARTITION BY geography ORDER BY balance DESC) AS rank_in_country
+        ROW_NUMBER() OVER (
+            PARTITION BY geography
+            ORDER BY balance DESC, customer_id
+        ) AS rank_in_country
     FROM customer_churn
     WHERE exited = 1
 )
-SELECT * 
-FROM RankedChurn 
-WHERE rank_in_country <= 3;
+SELECT
+    geography,
+    rank_in_country,
+    customer_id,
+    surname,
+    balance,
+    card_type
+FROM ranked_churn
+WHERE rank_in_country <= 3
+ORDER BY geography, rank_in_country;
 
--- 7. Active Member Churn Impact
-SELECT 
+
+-- 10. Active member churn impact
+SELECT
     is_active_member,
-    COUNT(customer_id) AS total_customers,
-    SUM(exited) AS churned_customers,
-    ROUND(AVG(exited) * 100, 2) AS churn_rate_pct
+    COUNT(customer_id)                                              AS total_customers,
+    SUM(exited)                                                     AS churned_customers,
+    ROUND(AVG(exited) * 100, 2)                                     AS churn_rate_pct
 FROM customer_churn
-GROUP BY is_active_member;
+GROUP BY is_active_member
+ORDER BY is_active_member;
 
--- 8. Credit Score Category vs Churn Rate
-SELECT 
-    CASE 
+
+-- 11. Credit score category vs churn rate
+SELECT
+    CASE
         WHEN credit_score < 580 THEN 'Poor'
-        WHEN credit_score BETWEEN 580 AND 669 THEN 'Fair'
-        WHEN credit_score BETWEEN 670 AND 739 THEN 'Good'
-        WHEN credit_score BETWEEN 740 AND 799 THEN 'Very Good'
+        WHEN credit_score < 670 THEN 'Fair'
+        WHEN credit_score < 740 THEN 'Good'
+        WHEN credit_score < 800 THEN 'Very Good'
         ELSE 'Exceptional'
-    END AS credit_category,
-    COUNT(customer_id) AS total_customers,
-    ROUND(AVG(exited) * 100, 2) AS churn_rate_pct
+    END                                                             AS credit_category,
+    COUNT(customer_id)                                              AS total_customers,
+    SUM(exited)                                                     AS churned_customers,
+    ROUND(AVG(exited) * 100, 2)                                     AS churn_rate_pct
 FROM customer_churn
 GROUP BY credit_category
-ORDER BY churn_rate_pct DESC;
+ORDER BY MIN(credit_score);
 
--- 9. Tenure (Years with bank) vs Churn Rate
-SELECT 
+
+-- 12. Tenure (years with bank) vs churn rate
+SELECT
     tenure,
-    COUNT(customer_id) AS total_customers,
-    SUM(exited) AS churned_customers,
-    ROUND(AVG(exited) * 100, 2) AS churn_rate_pct
+    COUNT(customer_id)                                              AS total_customers,
+    SUM(exited)                                                     AS churned_customers,
+    ROUND(AVG(exited) * 100, 2)                                     AS churn_rate_pct
 FROM customer_churn
 GROUP BY tenure
-ORDER BY tenure ASC;
+ORDER BY tenure;
+
+
+-- 13. Multi-dimensional: geography x age group (find the riskiest segments)
+WITH segmented AS (
+    SELECT
+        geography,
+        CASE
+            WHEN age < 18  THEN 'Under 18'
+            WHEN age <= 30 THEN '18-30'
+            WHEN age <= 45 THEN '31-45'
+            WHEN age <= 60 THEN '46-60'
+            ELSE '61+'
+        END AS age_group,
+        exited,
+        balance
+    FROM customer_churn
+)
+SELECT
+    geography,
+    age_group,
+    COUNT(*)                                                        AS total_customers,
+    SUM(exited)                                                     AS churned_customers,
+    ROUND(AVG(exited) * 100, 2)                                     AS churn_rate_pct,
+    ROUND(SUM(CASE WHEN exited = 1 THEN balance ELSE 0 END), 2)     AS balance_lost
+FROM segmented
+GROUP BY geography, age_group
+HAVING COUNT(*) >= 30          
+ORDER BY churn_rate_pct DESC;
+
+
+-- 14. Multi-dimensional: activity x number of products
+SELECT
+    is_active_member,
+    num_of_products,
+    COUNT(*)                                                        AS total_customers,
+    SUM(exited)                                                     AS churned_customers,
+    ROUND(AVG(exited) * 100, 2)                                     AS churn_rate_pct
+FROM customer_churn
+GROUP BY is_active_member, num_of_products
+ORDER BY is_active_member, num_of_products;
