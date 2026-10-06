@@ -1,4 +1,3 @@
-
 -- 1. Data inspection (first 10 rows)
 SELECT *
 FROM customer_churn
@@ -36,11 +35,10 @@ ORDER BY churn_rate_pct DESC;
 -- 4. Age group segmentation & churn rate
 SELECT
     CASE
-        WHEN age < 18  THEN 'Under 18'
-        WHEN age <= 30 THEN '18-30 (Young)'
-        WHEN age <= 45 THEN '31-45 (Adults)'
-        WHEN age <= 60 THEN '46-60 (Middle Age)'
-        ELSE '61+ (Seniors)'
+        WHEN age < 30 THEN '18-29'
+        WHEN age < 40 THEN '30-39'
+        WHEN age < 50 THEN '40-49'
+        ELSE '50+'
     END                                                             AS age_group,
     COUNT(customer_id)                                              AS total_customers,
     SUM(exited)                                                     AS churned_customers,
@@ -166,11 +164,10 @@ WITH segmented AS (
     SELECT
         geography,
         CASE
-            WHEN age < 18  THEN 'Under 18'
-            WHEN age <= 30 THEN '18-30'
-            WHEN age <= 45 THEN '31-45'
-            WHEN age <= 60 THEN '46-60'
-            ELSE '61+'
+            WHEN age < 30 THEN '18-29'
+            WHEN age < 40 THEN '30-39'
+            WHEN age < 50 THEN '40-49'
+            ELSE '50+'
         END AS age_group,
         exited,
         balance
