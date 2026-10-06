@@ -19,7 +19,7 @@ This project performs an end-to-end SQL analysis of a bank customer churn datase
 
 ## ❓ Key Business Questions
 1. **Geographic distribution:** churn rate and total balance lost per country (Germany, France, Spain).
-2. **Demographic risk:** churn by age cohort (`18-30`, `31-45`, `46-60`, `60+`) to isolate vulnerable groups.
+2. **Demographic risk:** churn by age cohort (`18-29`, `30-39`, `40-49`, `50+`) to isolate vulnerable groups.
 3. **Product & complaint correlation:** how churn changes with the number of products and with formal complaints.
 4. **Top at-risk churned accounts:** the 3 highest-balance churned customers per country.
 5. **Behavioral indicators:** impact of activity status (`is_active_member`), credit tier, and tenure.
